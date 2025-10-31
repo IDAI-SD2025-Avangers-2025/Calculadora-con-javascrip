@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Calculadora básica</title>
+ <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="card" role="application" aria-label="Calculadora básica">
+    <header>
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <rect x="1" y="1" width="22" height="22" rx="6" fill="#fff" opacity="0.08"/>
+        <path d="M6 8h12M6 12h12M6 16h8" stroke="#0f172a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h1>Calculadora básica</h1>
+    </header>
+
+    <div class="calculator">
+      <div class="screen" id="screen">
+        <div class="history" id="history" aria-live="polite"></div>
+        <div class="display" id="display">0</div>
+      </div>
+
+      <div class="pad" id="pad">
+        <button class="fn" data-action="clear">C</button>
+        <button class="fn" data-action="neg">±</button>
+        <button class="fn" data-action="back">⌫</button>
+        <button class="op" data-action="/">÷</button>
+
+        <button data-number="7">7</button>
+        <button data-number="8">8</button>
+        <button data-number="9">9</button>
+        <button class="op" data-action="*">×</button>
+
+        <button data-number="4">4</button>
+        <button data-number="5">5</button>
+        <button data-number="6">6</button>
+        <button class="op" data-action="-">−</button>
+
+        <button data-number="1">1</button>
+        <button data-number="2">2</button>
+        <button data-number="3">3</button>
+        <button class="op" data-action="+">+</button>
+
+        <button data-number="0" class="zero">0</button>
+        <button data-number=".">.</button>
+        <button class="op" data-action="=">=</button>
+
+        <button class="fn btn-wide" data-action="pow">xʸ</button>
+        <button class="fn" data-action="sqrt">√</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+//  JavaScript 
+const displayEl = document.getElementById('display');
+const pad = document.getElementById('pad');
+
+let current = '';
+let previous = null;
+let operator = null;
+let waitingForSecond = false;
+
+function updateScreen(){
+  displayEl.textContent = current === '' ? '0' : current;
+}
+
+function inputNumber(n){
+  if(waitingForSecond){ current = ''; waitingForSecond = false; }
+  if(n === '.' && current.includes('.')) return;
+  current = (current === '0' && n !== '.') ? n : (current + n);
+  updateScreen();
+}
+
+function chooseOperator(op){
+  if(op === 'sqrt'){
+    // raíz cuadrada inmediata sobre el número actual
+    const v = parseFloat(current || '0');
+    current = String(Math.sqrt(v));
+    updateScreen();
+    return;
+  }
+
+  if(previous === null){
+    previous = current || '0';
+  } else if(!waitingForSecond){
+    compute();
+  }
+
+  operator = op;
+  waitingForSecond = true;
+}
+
+function compute(){
+  const a = parseFloat(previous || '0');
+  const b = parseFloat(current || '0');
+  let res = 0;
+  switch(operator){
+    case '+': res = a + b; break;
+    case '-': res = a - b; break;
+    case '*': res = a * b; break;
+    case '/': res = b === 0 ? 'Error' : a / b; break;
+    case 'pow': res = Math.pow(a,b); break;
+    default: return;
+  }
+  current = String(res);
+  previous = null;
+  operator = null;
+  waitingForSecond = false;
+  updateScreen();
+}
+
+function clearAll(){ current = ''; previous = null; operator = null; waitingForSecond = false; updateScreen(); }
+function deleteLast(){ if(current.length > 0) current = current.slice(0,-1); updateScreen(); }
+function negate(){ if(!current) return; current = String(parseFloat(current) * -1); updateScreen(); }
+
+pad.addEventListener('click', (e) => {
+  const btn = e.target.closest('button'); if(!btn) return;
+  const num = btn.dataset.number;
+  const action = btn.dataset.action;
+  if(num !== undefined) inputNumber(num);
+  else if(action){
+    if(action === 'clear') clearAll();
+    else if(action === 'back') deleteLast();
+    else if(action === 'neg') negate();
+    else if(action === '=') compute();
+
+  }
+});
+
+// iniciar
+updateScreen();
+</script>
+</body>
+</html>
